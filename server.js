@@ -1,65 +1,55 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios');
 const cors = require('cors');
-require('dotenv').config();
+const bodyParser = require('body-parser');
+const { Configuration, OpenAIApi } = require('openai');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-let conversations = {};
-
-app.get('/', (req, res) => {
-  res.send('AI Closer Bot is running.');
+// OpenAI API setup
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
+// /chat endpoint
 app.post('/chat', async (req, res) => {
   const { sessionId, userMessage } = req.body;
-
-  if (!sessionId || !userMessage) {
-    return res.status(400).json({ error: 'Missing sessionId or userMessage' });
+  if (!userMessage) {
+    return res.status(400).json({ error: 'Missing userMessage' });
   }
-
-  if (!conversations[sessionId]) {
-    conversations[sessionId] = [];
-  }
-
-  conversations[sessionId].push({ role: 'user', content: userMessage });
 
   try {
-    const response = await axios.post('https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-3.5-turbo', // ← Safer model everyone has access to
-        messages: [
-          { role: 'system', content: 'You are a friendly debt relief assistant helping users qualify for debt help.' },
-          ...conversations[sessionId]
-        ],
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo', // Or whichever model you're using
+      messages: [{ role: 'user', content: userMessage }],
+    });
 
-    const botMessage = response.data.choices[0].message.content;
-    conversations[sessionId].push({ role: 'assistant', content: botMessage });
+    const botMessage = completion.data.choices[0].message.content;
     res.json({ botMessage });
-
-  } catch (error) {
-    console.error(error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Error contacting OpenAI API.' });
+  } catch (err) {
+    console.error('OpenAI error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to generate bot reply' });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// /submit-lead endpoint
+app.post('/submit-lead', (req, res) => {
+  const leadData = req.body;
+  console.log('New Lead Captured:', leadData);
+
+  // Later you can save to Google Sheets, webhook, etc here
+
+  res.json({ success: true, message: 'Lead received successfully!' });
 });
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 
