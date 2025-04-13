@@ -34,7 +34,7 @@ app.post('/chat', async (req, res) => {
   try {
     const response = await axios.post('https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4-1106-preview',
+        model: 'gpt-3.5-turbo', // ← Safer model everyone has access to
         messages: [
           { role: 'system', content: 'You are a friendly debt relief assistant helping users qualify for debt help.' },
           ...conversations[sessionId]
@@ -62,3 +62,4 @@ app.post('/chat', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
