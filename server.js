@@ -16,7 +16,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// /chat endpoint
+// Chat endpoint
 app.post('/chat', async (req, res) => {
   const { sessionId, userMessage } = req.body;
   if (!userMessage) {
@@ -25,7 +25,7 @@ app.post('/chat', async (req, res) => {
 
   try {
     const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo', // Or whichever model you're using
+      model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: userMessage }],
     });
 
@@ -37,12 +37,12 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// /submit-lead endpoint
+// Submit lead endpoint
 app.post('/submit-lead', (req, res) => {
   const leadData = req.body;
   console.log('New Lead Captured:', leadData);
 
-  // Later you can save to Google Sheets, webhook, etc here
+  // Here you can save to Google Sheets, webhook, database, etc
 
   res.json({ success: true, message: 'Lead received successfully!' });
 });
@@ -51,5 +51,4 @@ app.post('/submit-lead', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
 
