@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { Configuration, OpenAIApi } = require('openai');
+const { OpenAI } = require('openai');  // <-- updated
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,12 +11,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // OpenAI API setup
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY   // <-- updated
 });
-const openai = new OpenAIApi(configuration);
 
-// Chat endpoint
+// /chat endpoint
 app.post('/chat', async (req, res) => {
   const { sessionId, userMessage } = req.body;
   if (!userMessage) {
@@ -24,12 +23,12 @@ app.post('/chat', async (req, res) => {
   }
 
   try {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: userMessage }],
     });
 
-    const botMessage = completion.data.choices[0].message.content;
+    const botMessage = completion.choices[0].message.content;
     res.json({ botMessage });
   } catch (err) {
     console.error('OpenAI error:', err.response?.data || err.message);
@@ -37,12 +36,12 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// Submit lead endpoint
+// /submit-lead endpoint
 app.post('/submit-lead', (req, res) => {
   const leadData = req.body;
   console.log('New Lead Captured:', leadData);
 
-  // Here you can save to Google Sheets, webhook, database, etc
+  // Later you can save to Google Sheets, webhook, etc here
 
   res.json({ success: true, message: 'Lead received successfully!' });
 });
@@ -51,4 +50,3 @@ app.post('/submit-lead', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
